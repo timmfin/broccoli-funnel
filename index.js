@@ -34,8 +34,13 @@ function Funnel(inputTree, options) {
 
   this.destDir = this.destDir || '/';
 
-  if (this.files && !Array.isArray(this.files)) {
-    throw new Error('Invalid files option, it must be an array.');
+  if (this.files && typeof this.files === 'function') {
+    // Save dynamic files func as a different variable and let the rest of the code
+    // still assume that this.files is always an array.
+    this._dynamicFilesFunc = this.files;
+    delete this.files;
+  } else if (this.files && !Array.isArray(this.files)) {
+    throw new Error('Invalid files option, it must be an array or function.');
   }
 
   this._setupFilter('include');
@@ -95,6 +100,10 @@ Funnel.prototype.rebuild = function() {
   var inputPath = this.inputPath;
   if (this.srcDir) {
     inputPath = path.join(inputPath, this.srcDir);
+  }
+
+  if (this._dynamicFilesFunc) {
+    this.files = this._dynamicFilesFunc();
   }
 
   if (this.shouldLinkRoots()) {
