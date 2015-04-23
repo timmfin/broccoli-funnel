@@ -18,6 +18,16 @@ function makeDictionary() {
   return cache;
 }
 
+function arraysMatch(array1, array2) {
+  if (array1 == array2) {  // jshint ignore:line
+    return true;
+  } else if ((!array1 && array2) || (array1 && !array2)) {
+    return false;
+  } else {
+    return array1.slice(0).sort().join(',') === array2.slice(0).sort().join('');
+  }
+}
+
 function Funnel(inputTree, options) {
   if (!(this instanceof Funnel)) { return new Funnel(inputTree, options); }
 
@@ -103,7 +113,13 @@ Funnel.prototype.rebuild = function() {
   }
 
   if (this._dynamicFilesFunc) {
-    this.files = this._dynamicFilesFunc();
+    this.lastFiles = this.files;
+    this.files = this._dynamicFilesFunc() || [];
+
+    // Blow away the include cache if the list of files is new
+    if (!arraysMatch(this.lastFiles, this.files)) {
+      this._includeFileCache = makeDictionary();
+    }
   }
 
   if (this.shouldLinkRoots()) {
